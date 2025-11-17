@@ -45,7 +45,7 @@ const Index = () => {
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white shadow-sm border">
               <img
-                src="/logo.png"
+                src="/src/assets/logo.png"
                 alt="LevelUp Logo"
                 className="w-10 h-10 object-contain"
               />

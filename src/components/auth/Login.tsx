@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Shield, Mail, Lock, ArrowLeft, UserPlus } from "lucide-react";
+import { AlertCircle, Shield, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Register } from "./Register";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -20,24 +19,15 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
   const navigate = useNavigate();
 
-  // Show register component if requested
-  if (showRegister) {
-    return <Register onBackToLogin={() => setShowRegister(false)} />;
-  }
-
-  const getUserData = async (userUid: string) => {
+  const checkUserRole = async (userUid: string) => {
     // For demo purposes, first check if this is a known demo email
     const officialEmails = ['rohit@gmail.com', 'admin@sai.gov.in', 'official@nsta.gov.in'];
     const academyEmails = ['aman@nsta.gov.in', 'academy2@sai.gov.in', 'coach@academy.com'];
     
     if (officialEmails.includes(email.toLowerCase()) || academyEmails.includes(email.toLowerCase())) {
-      return {
-        role: officialEmails.includes(email.toLowerCase()) ? 'admin' : 'academy',
-        hasAccess: true
-      };
+      return true;
     }
     
     // If not a demo email, check Firestore for actual user data
@@ -47,18 +37,14 @@ export function Login() {
       const userDoc = await getDoc(doc(db, 'users', userUid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        return {
-          role: userData.role,
-          hasAccess: ['admin', 'academy', 'user'].includes(userData.role),
-          userData
-        };
+        return userData.role === 'official' || userData.role === 'academy';
       }
     } catch (error) {
       console.error('Error checking user role:', error);
     }
     
     // If no user document found and not a demo email, deny access
-    return { role: null, hasAccess: false };
+    return false;
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -98,27 +84,19 @@ export function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      // Check if user has appropriate role and get user data
-      const userInfo = await getUserData(user.uid);
+      // Check if user has appropriate role
+      const hasValidRole = await checkUserRole(user.uid);
       
-      if (!userInfo.hasAccess) {
+      if (!hasValidRole) {
         // Sign out the user if they don't have valid role
         await auth.signOut();
-        setError('Access denied. Only authorized users can access this system.');
+        setError('Access denied. Only authorized officials can access this system.');
         setLoading(false);
         return;
       }
       
       toast.success('Login successful! Welcome to LevelUp Portal.');
-      
-      // Navigate based on role
-      if (userInfo.role === 'admin') {
-        navigate("/dashboard");
-      } else if (userInfo.role === 'academy') {
-        navigate("/dashboard");
-      } else {
-        navigate("/dashboard"); // All users go to dashboard for now
-      }
+      navigate("/dashboard");
     } catch (error: any) {
       if (error.code === 'auth/user-not-found') {
         setError('No account found with this email address.');
@@ -172,7 +150,7 @@ export function Login() {
         <div className="text-center mb-8">
           <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg overflow-hidden bg-white">
             <img
-              src="/logo.png"
+              src="/src/assets/logo.png"
               alt="LevelUp Logo"
               className="w-16 h-16 object-contain"
             />

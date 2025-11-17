@@ -160,7 +160,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <img
-          src="/logo.png"
+          src="/src/assets/logo.png"
           alt="LevelUp Logo"
           className="h-6 w-6 object-contain"
         />
