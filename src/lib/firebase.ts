@@ -13,7 +13,17 @@ const hasFirebaseEnv = () => {
     'VITE_APP_ID',
   ];
 
-  return required.every((k) => typeof (import.meta.env as any)[k] === 'string' && (import.meta.env as any)[k].length > 0);
+  const missing = required.filter((k) => {
+    const value = (import.meta.env as any)[k];
+    return typeof value !== 'string' || value.length === 0;
+  });
+
+  if (missing.length > 0) {
+    console.warn('[firebase] Missing environment variables:', missing);
+    console.log('[firebase] Available env vars:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
+  }
+
+  return missing.length === 0;
 };
 
 let app = null as any;
@@ -35,6 +45,7 @@ if (hasFirebaseEnv()) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    console.log('[firebase] Successfully initialized with project:', import.meta.env.VITE_PROJECT_ID);
   } catch (err) {
     // If initialization fails, log a helpful message and keep exports null so app won't crash
     // eslint-disable-next-line no-console

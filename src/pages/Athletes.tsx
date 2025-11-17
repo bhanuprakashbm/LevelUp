@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/main-layout";
 import { Search, Filter, MoreHorizontal, User, MapPin, Trophy, Calendar, Plus, Edit, Trash2, Eye, Phone, Mail } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,17 +47,61 @@ interface AthleteFormData {
 }
 
 export default function Athletes() {
+  const navigate = useNavigate();
   const { userRole, userData } = useAuth();
   
-  // Apply role-based filtering
-  const athleteFilters = userRole === 'academy' && userData?.academyId 
-    ? { academyId: userData.academyId }
-    : {};
+  // Apply role-based filtering (temporarily disabled for testing)
+  const athleteFilters = {}; // Show all athletes regardless of role
+  
+  // Original filtering logic (commented out for testing):
+  // const athleteFilters = userRole === 'academy' && userData?.academyId 
+  //   ? { academyId: userData.academyId }
+  //   : {};
   
   const { data: athletes, loading: athletesLoading, error: athletesError } = useAthletes(athleteFilters);
   const { data: states, loading: statesLoading } = useStates();
   const { data: sports } = useSports();
   const athletesCRUD = useAthletesCRUD();
+
+  // Fallback list of Indian states for filter dropdown
+  const indianStates = [
+    { id: 'andhra-pradesh', name: 'Andhra Pradesh' },
+    { id: 'arunachal-pradesh', name: 'Arunachal Pradesh' },
+    { id: 'assam', name: 'Assam' },
+    { id: 'bihar', name: 'Bihar' },
+    { id: 'chhattisgarh', name: 'Chhattisgarh' },
+    { id: 'goa', name: 'Goa' },
+    { id: 'gujarat', name: 'Gujarat' },
+    { id: 'haryana', name: 'Haryana' },
+    { id: 'himachal-pradesh', name: 'Himachal Pradesh' },
+    { id: 'jharkhand', name: 'Jharkhand' },
+    { id: 'karnataka', name: 'Karnataka' },
+    { id: 'kerala', name: 'Kerala' },
+    { id: 'madhya-pradesh', name: 'Madhya Pradesh' },
+    { id: 'maharashtra', name: 'Maharashtra' },
+    { id: 'manipur', name: 'Manipur' },
+    { id: 'meghalaya', name: 'Meghalaya' },
+    { id: 'mizoram', name: 'Mizoram' },
+    { id: 'nagaland', name: 'Nagaland' },
+    { id: 'odisha', name: 'Odisha' },
+    { id: 'punjab', name: 'Punjab' },
+    { id: 'rajasthan', name: 'Rajasthan' },
+    { id: 'sikkim', name: 'Sikkim' },
+    { id: 'tamil-nadu', name: 'Tamil Nadu' },
+    { id: 'telangana', name: 'Telangana' },
+    { id: 'tripura', name: 'Tripura' },
+    { id: 'uttar-pradesh', name: 'Uttar Pradesh' },
+    { id: 'uttarakhand', name: 'Uttarakhand' },
+    { id: 'west-bengal', name: 'West Bengal' },
+    { id: 'delhi', name: 'Delhi' },
+    { id: 'chandigarh', name: 'Chandigarh' },
+    { id: 'puducherry', name: 'Puducherry' },
+    { id: 'jammu-kashmir', name: 'Jammu and Kashmir' },
+    { id: 'ladakh', name: 'Ladakh' }
+  ];
+
+  // Use Firestore states if available, otherwise use fallback list
+  const availableStates = states && states.length > 0 ? states : indianStates;
   
   const [searchTerm, setSearchTerm] = useState('');
   const [stateFilter, setStateFilter] = useState('all');
@@ -244,6 +289,15 @@ export default function Athletes() {
     }
   };
 
+  const handleViewProfile = (athlete: any) => {
+    navigate(`/athletes/${athlete.id}`);
+  };
+
+  const handleViewAssessments = (athlete: any) => {
+    // For now, show assessment info in a toast - you can implement proper assessment view later
+    toast.info(`Viewing assessments for ${athlete.name}\nOverall Score: ${athlete.performance?.overallScore || 0}%\nLast Assessment: ${athlete.lastAssessment}`);
+  };
+
   const getBenchmarkColor = (status: string) => {
     switch (status) {
       case 'Above':
@@ -331,7 +385,7 @@ export default function Athletes() {
                 <AthleteForm 
                   formData={formData}
                   setFormData={setFormData}
-                  states={states}
+                  states={availableStates}
                   sports={sports}
                 />
                 
@@ -368,7 +422,7 @@ export default function Athletes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All States</SelectItem>
-                  {states?.map((state) => (
+                  {availableStates?.map((state) => (
                     <SelectItem key={state.id} value={state.name}>
                       {state.name}
                     </SelectItem>
@@ -443,7 +497,7 @@ export default function Athletes() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => handleViewProfile(athlete)}>
                       <Eye className="mr-2 h-4 w-4" />
                       View Profile
                     </DropdownMenuItem>
@@ -451,7 +505,7 @@ export default function Athletes() {
                       <Edit className="mr-2 h-4 w-4" />
                       Edit Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleViewAssessments(athlete)}>
                       <Trophy className="mr-2 h-4 w-4" />
                       View Assessments
                     </DropdownMenuItem>
@@ -526,7 +580,7 @@ export default function Athletes() {
           <AthleteForm 
             formData={formData}
             setFormData={setFormData}
-            states={states}
+            states={availableStates}
             sports={sports}
             isEditing
           />

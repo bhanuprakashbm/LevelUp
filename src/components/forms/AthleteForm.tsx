@@ -16,6 +16,46 @@ interface AthleteFormProps {
 }
 
 const AthleteForm = ({ formData, setFormData, states = [], sports = [], isEditing = false }: AthleteFormProps) => {
+  // Fallback list of Indian states
+  const indianStates = [
+    { id: 'andhra-pradesh', name: 'Andhra Pradesh' },
+    { id: 'arunachal-pradesh', name: 'Arunachal Pradesh' },
+    { id: 'assam', name: 'Assam' },
+    { id: 'bihar', name: 'Bihar' },
+    { id: 'chhattisgarh', name: 'Chhattisgarh' },
+    { id: 'goa', name: 'Goa' },
+    { id: 'gujarat', name: 'Gujarat' },
+    { id: 'haryana', name: 'Haryana' },
+    { id: 'himachal-pradesh', name: 'Himachal Pradesh' },
+    { id: 'jharkhand', name: 'Jharkhand' },
+    { id: 'karnataka', name: 'Karnataka' },
+    { id: 'kerala', name: 'Kerala' },
+    { id: 'madhya-pradesh', name: 'Madhya Pradesh' },
+    { id: 'maharashtra', name: 'Maharashtra' },
+    { id: 'manipur', name: 'Manipur' },
+    { id: 'meghalaya', name: 'Meghalaya' },
+    { id: 'mizoram', name: 'Mizoram' },
+    { id: 'nagaland', name: 'Nagaland' },
+    { id: 'odisha', name: 'Odisha' },
+    { id: 'punjab', name: 'Punjab' },
+    { id: 'rajasthan', name: 'Rajasthan' },
+    { id: 'sikkim', name: 'Sikkim' },
+    { id: 'tamil-nadu', name: 'Tamil Nadu' },
+    { id: 'telangana', name: 'Telangana' },
+    { id: 'tripura', name: 'Tripura' },
+    { id: 'uttar-pradesh', name: 'Uttar Pradesh' },
+    { id: 'uttarakhand', name: 'Uttarakhand' },
+    { id: 'west-bengal', name: 'West Bengal' },
+    { id: 'delhi', name: 'Delhi' },
+    { id: 'chandigarh', name: 'Chandigarh' },
+    { id: 'puducherry', name: 'Puducherry' },
+    { id: 'jammu-kashmir', name: 'Jammu and Kashmir' },
+    { id: 'ladakh', name: 'Ladakh' }
+  ];
+
+  // Use Firestore states if available, otherwise use fallback list
+  const availableStates = states && states.length > 0 ? states : indianStates;
+
   const sportsList = [
     'Athletics', 'Football', 'Cricket', 'Badminton', 'Hockey', 'Basketball',
     'Swimming', 'Tennis', 'Volleyball', 'Wrestling', 'Boxing', 'Kabaddi',
@@ -111,7 +151,7 @@ const AthleteForm = ({ formData, setFormData, states = [], sports = [], isEditin
                 <SelectValue placeholder="Select state" />
               </SelectTrigger>
               <SelectContent>
-                {states.map((state) => (
+                {availableStates.map((state) => (
                   <SelectItem key={state.id} value={state.name}>
                     {state.name}
                   </SelectItem>

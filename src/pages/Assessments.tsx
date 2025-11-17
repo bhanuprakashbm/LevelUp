@@ -7,9 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAssessments } from "@/hooks/useFirebaseData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { VideoAnalysis } from "@/components/assessments/VideoAnalysis";
+import { useAssessmentsCRUD } from "@/hooks/useFirebaseCRUD";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Assessments() {
   const { data: assessments, loading: assessmentsLoading, error: assessmentsError } = useAssessments();
+  const [openUploader, setOpenUploader] = useState(false);
+  const { create: createAssessment } = useAssessmentsCRUD();
   
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -43,6 +50,9 @@ export default function Assessments() {
       description="Review and validate athlete performance assessments"
     >
       <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={() => setOpenUploader(true)}>New Assessment</Button>
+        </div>
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
@@ -123,18 +133,24 @@ export default function Assessments() {
               
               <CardContent>
                 <div className="grid gap-6 lg:grid-cols-2">
-                  {/* Video Player Placeholder */}
+                  {/* Video Player */}
                   <div className="space-y-4">
-                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                      <div className="text-center">
-                        <Play className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Assessment Video</p>
-                        <Button variant="outline" size="sm" className="mt-2">
-                          <Play className="mr-2 h-4 w-4" />
-                          Play Video
-                        </Button>
+                    {assessment.videoUrl ? (
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        <video 
+                          src={assessment.videoUrl} 
+                          controls 
+                          className="w-full h-full object-contain"
+                        />
                       </div>
-                    </div>
+                    ) : (
+                      <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <Play className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">No video available</p>
+                        </div>
+                      </div>
+                    )}
                     
                     {assessment.cheatDetected && (
                       <Card className="border-danger bg-danger-muted">
@@ -202,6 +218,36 @@ export default function Assessments() {
           </div>
         )}
       </div>
+    {/* Video Analysis Dialog */}
+      <Dialog open={openUploader} onOpenChange={setOpenUploader}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>New Assessment Video Analysis</DialogTitle>
+          </DialogHeader>
+          <VideoAnalysis
+            onAnalysisComplete={async (result: any) => {
+              try {
+                await createAssessment({
+                  athleteId: "UNKNOWN",
+                  athleteName: "Unknown",
+                  testType: result?.test_type || "Video Analysis",
+                  submissionDate: new Date().toISOString(),
+                  status: "Pending",
+                  aiScore: 0,
+                  videoUrl: `http://localhost:8000${result.video_url}`,
+                  cheatDetected: false,
+                  performanceMetric: 0,
+                });
+                toast.success("Assessment created successfully");
+                setOpenUploader(false);
+              } catch (err) {
+                console.error(err);
+                toast.error("Failed to create assessment");
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
