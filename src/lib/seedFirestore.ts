@@ -34,7 +34,7 @@ interface Assessment {
   id: string;
   athleteId: string;
   athleteName: string;
-  testType: 'Vertical Jump' | 'Sit-ups' | 'Shuttle Run' | 'Flexibility';
+  testType: 'Vertical Jump' | 'Sit-ups' | 'Push-ups' | 'Shuttle Run' | 'Flexibility';
   submissionDate: string;
   status: 'Approved' | 'Pending' | 'Flagged' | 'Rejected';
   aiScore: number;
@@ -162,7 +162,7 @@ const generateAthletes = (): Omit<Athlete, 'createdAt' | 'updatedAt'>[] => {
 };
 
 const generateAssessments = (athletes: Omit<Athlete, 'createdAt' | 'updatedAt'>[]): Omit<Assessment, 'createdAt' | 'updatedAt'>[] => {
-  const testTypes: Assessment['testType'][] = ['Vertical Jump', 'Sit-ups', 'Shuttle Run', 'Flexibility'];
+  const testTypes: Assessment['testType'][] = ['Vertical Jump', 'Sit-ups', 'Push-ups', 'Shuttle Run', 'Flexibility'];
   const assessments: Omit<Assessment, 'createdAt' | 'updatedAt'>[] = [];
 
   athletes.forEach(athlete => {

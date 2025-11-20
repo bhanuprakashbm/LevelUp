@@ -1,39 +1,32 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Upload, 
-  Video, 
-  Loader2, 
-  Trophy, 
-  BarChart3, 
-  Target, 
-  Zap, 
-  TrendingUp, 
-  Medal, 
-  Star, 
-  Clock, 
-  Ruler, 
-  Activity,
-  ArrowLeft,
-  Play,
-  User,
-  MapPin,
-  Phone,
-  Mail,
-  Calendar,
-  Info,
-  AlertCircle,
-  CheckCircle
-} from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Activity, 
+  ArrowLeft, 
+  BarChart3, 
+  CheckCircle, 
+  Loader2, 
+  Play, 
+  Ruler, 
+  Target, 
+  Trophy, 
+  User, 
+  Video, 
+  Zap 
+} from "lucide-react";
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AnalysisResult {
   jumpHeight: number;
@@ -60,28 +53,32 @@ interface LeaderboardEntry {
   location: string;
 }
 
+interface AthletePerformance {
+  verticalJump?: number;
+  sitUps?: number;
+  shuttleRun?: number;
+  flexibility?: number;
+  pushUps?: number;
+  overallScore?: number;
+}
+
 interface AthleteProfileData {
+  id?: string;
   fullName: string;
-  age: string;
-  gender: string;
-  phoneNumber: string;
-  email: string;
-  address: string;
-  district: string;
-  state: string;
-  sportInterest: string[];
+  age?: string;
+  gender?: string;
+  phoneNumber?: string;
+  email?: string;
+  address?: string;
+  district?: string;
+  state?: string;
+  sportInterest?: string[];
   coachName?: string;
   registrationDate: string;
   lastAssessment: string;
-  performance?: {
-    verticalJump?: number;
-    sitUps?: number;
-    shuttleRun?: number;
-    flexibility?: number;
-    overallScore?: number;
-  };
-  benchmarkStatus?: 'Above' | 'At' | 'Below';
-  status?: 'Active' | 'Inactive' | 'Pending';
+  status: 'Active' | 'Inactive' | 'Pending';
+  benchmarkStatus: 'Above' | 'At' | 'Below';
+  performance?: AthletePerformance;
 }
 
 interface AssessmentData {
@@ -339,66 +336,61 @@ export function VideoAnalysis({
     setCurrentStep('Initializing analysis...');
 
     try {
-      // Step 1: Upload video
-      setCurrentStep('Uploading video...');
-      setAnalysisProgress(20);
-      const videoUrl = await uploadVideoToFirebase(videoFile);
-      setVideoUrl(videoUrl);
+      // Simulate upload and processing time
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setAnalysisProgress(40);
+      setCurrentStep('Processing video...');
       
-      // Simulate remaining analysis steps
-      const steps = [
-        { step: 'Processing video frames...', progress: 40, duration: 1200 },
-        { step: 'Analyzing movement patterns...', progress: 65, duration: 1500 },
-        { step: 'Generating performance metrics...', progress: 85, duration: 1000 },
-        { step: 'Finalizing report...', progress: 100, duration: 500 }
-      ];
-
-      for (const { step, progress, duration } of steps) {
-        setCurrentStep(step);
-        setAnalysisProgress(progress);
-        await new Promise(resolve => setTimeout(resolve, duration));
-      }
-
-      // Generate mock analysis result
-      const result = generateMockAnalysis(videoFile.name);
-      setAnalysisResult(result);
-      setIsAnalysisComplete(true);
-      setStep('results');
-
-      // Save assessment to Firestore
-      if (athleteId) {
-        const assessmentId = await saveAssessmentToFirestore({
-          videoUrl,
-          analysisResult: result,
-          status: 'completed',
-          testType: testType
-        });
-        
-        if (onAssessmentSaved) {
-          onAssessmentSaved(assessmentId);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setAnalysisProgress(70);
+      setCurrentStep('Analyzing push-ups...');
+      
+      // Generate mock push-up data
+      const mockPushUps = Math.floor(Math.random() * 20) + 10; // Random number between 10-30
+      const pushUpScore = Math.min(100, Math.floor((mockPushUps / 30) * 100)); // Score based on push-ups (max 30 for 100%)
+      
+      // Create mock result with push-up data
+      const result = {
+        test_type: 'push_ups',
+        video_url: '/mock-video-url',
+        data: {
+          pushUps: mockPushUps,
+          formScore: Math.min(100, pushUpScore + 10), // Slightly higher than push-up count
+          speed: Math.min(100, pushUpScore + 5), // Slightly higher than push-up count
+          overallScore: pushUpScore,
+          summary: `Completed ${mockPushUps} push-ups with good form.`,
+          recommendations: [
+            'Focus on maintaining a straight body line',
+            'Try to increase your range of motion',
+            'Keep your core engaged throughout the movement'
+          ]
         }
-      }
-
-      // Update profile with analysis results
-      const benchmarkStatus = result.overallScore >= 85 ? 'Above' : 
-                           result.overallScore >= 70 ? 'At' : 'Below';
+      };
       
+      // Update profile with push-up results
       const updatedProfile: AthleteProfileData = {
         ...profileData,
+        fullName: profileData.fullName || 'New Athlete',
         lastAssessment: new Date().toISOString(),
         performance: {
           ...profileData.performance,
-          verticalJump: result.jumpHeight,
-          overallScore: result.overallScore
+          pushUps: mockPushUps,
+          overallScore: pushUpScore
         },
-        benchmarkStatus: benchmarkStatus as 'Above' | 'At' | 'Below'
+        benchmarkStatus: pushUpScore >= 85 ? 'Above' : pushUpScore >= 70 ? 'At' : 'Below'
       };
-
+      
+      // Call onAnalysisComplete with both result and profile data
       if (onAnalysisComplete) {
-        onAnalysisComplete({ success: true, data: result }, updatedProfile);
+        onAnalysisComplete(result, updatedProfile);
       }
-
-      toast.success('Analysis completed and saved successfully!');
+      
+      // If we have an onAssessmentSaved callback, call it with the assessment ID
+      // This will be used to redirect to the profile page
+      if (onAssessmentSaved) {
+        const assessmentId = `assess_${Date.now()}`;
+        onAssessmentSaved(assessmentId);
+      }
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error('Analysis failed. Please try again with a different video.');

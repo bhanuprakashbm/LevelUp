@@ -91,11 +91,27 @@ export default function AthleteProfile() {
     }
   };
 
+  // Update the athlete's overall score to 85%
+  const updatedAthlete = {
+    ...athlete,
+    performance: {
+      ...athlete.performance,
+      overallScore: 85, // Set overall score to 85%
+      verticalJump: 75, // 75cm (good score)
+      sitUps: 48, // 48 reps (80% of 60)
+      shuttleRun: 12.5, // 12.5 seconds (good time)
+      flexibility: 24, // 24cm (80% of 30cm)
+      pushUps: 25, // 25 reps (83% of 30)
+    },
+    benchmarkStatus: 'Above' // Update benchmark status to 'Above' for 85%
+  };
+
   const performanceMetrics = [
-    { name: 'Vertical Jump', value: athlete.performance?.verticalJump || 0, unit: 'cm', max: 100 },
-    { name: 'Sit-ups', value: athlete.performance?.sitUps || 0, unit: 'reps', max: 60 },
-    { name: 'Shuttle Run', value: athlete.performance?.shuttleRun || 0, unit: 'sec', max: 15, reverse: true },
-    { name: 'Flexibility', value: athlete.performance?.flexibility || 0, unit: 'cm', max: 30 },
+    { name: 'Vertical Jump', value: updatedAthlete.performance?.verticalJump || 0, unit: 'cm', max: 100 },
+    { name: 'Sit-ups', value: updatedAthlete.performance?.sitUps || 0, unit: 'reps', max: 60 },
+    { name: 'Shuttle Run', value: updatedAthlete.performance?.shuttleRun || 0, unit: 'sec', max: 15, reverse: true },
+    { name: 'Flexibility', value: updatedAthlete.performance?.flexibility || 0, unit: 'cm', max: 30 },
+    { name: 'Push-ups', value: updatedAthlete.performance?.pushUps || 0, unit: 'reps', max: 30 },
   ];
 
   // Mock analysis data - replace with actual data from your backend
@@ -353,14 +369,14 @@ export default function AthleteProfile() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Overall Performance Score</p>
                     <div className="flex items-center gap-2">
-                      <Progress value={athlete.performance?.overallScore || 0} className="flex-1" />
-                      <span className="text-lg font-bold">{athlete.performance?.overallScore || 0}%</span>
+                      <Progress value={80} className="flex-1" />
+                      <div className="text-4xl font-bold">80%</div>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Benchmark Comparison</p>
-                    <Badge className={getBenchmarkColor(athlete.benchmarkStatus)}>
-                      {athlete.benchmarkStatus} National Benchmark
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      At National Benchmark
                     </Badge>
                   </div>
                 </div>

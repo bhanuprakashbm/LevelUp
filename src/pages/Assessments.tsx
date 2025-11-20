@@ -3,20 +3,24 @@ import { Play, Eye, CheckCircle, XCircle, AlertTriangle, Filter, Search } from "
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
+import { createAthleteProfile } from '@/lib/athletes';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAssessments } from "@/hooks/useFirebaseData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VideoAnalysis } from "@/components/assessments/VideoAnalysis";
-import { useAssessmentsCRUD } from "@/hooks/useFirebaseCRUD";
+import { useAssessmentsCRUD, useAthletesCRUD } from "@/hooks/useFirebaseCRUD";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export default function Assessments() {
   const { data: assessments, loading: assessmentsLoading, error: assessmentsError } = useAssessments();
   const [openUploader, setOpenUploader] = useState(false);
-  const { create: createAssessment } = useAssessmentsCRUD();
+  const { create: createAssessment, update: updateAssessment } = useAssessmentsCRUD();
+  const { create: createAthlete } = useAthletesCRUD();
+  const [updatingAssessment, setUpdatingAssessment] = useState<string | null>(null);
   
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -34,15 +38,31 @@ export default function Assessments() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Approved':
-        return 'status-approved';
+        return 'bg-green-100 text-green-800';
       case 'Flagged':
-        return 'status-flagged';
+        return 'bg-yellow-100 text-yellow-800';
       case 'Rejected':
-        return 'status-flagged';
+        return 'bg-red-100 text-red-800';
       default:
-        return 'status-pending';
+        return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const handleStatusUpdate = async (assessmentId: string, status: string) => {
+    try {
+      setUpdatingAssessment(assessmentId);
+      await updateAssessment(assessmentId, { status });
+      toast.success(`Assessment ${status.toLowerCase()} successfully`);
+      // No need to refetch as useFirestoreQuery provides real-time updates
+    } catch (error) {
+      console.error(`Error ${status.toLowerCase()}ing assessment:`, error);
+      toast.error(`Failed to ${status.toLowerCase()} assessment`);
+    } finally {
+      setUpdatingAssessment(null);
+    }
+  };
+
+  const navigate = useNavigate();
 
   return (
     <MainLayout 
@@ -197,17 +217,35 @@ export default function Assessments() {
                     )}
 
                     <div className="flex gap-2 pt-4">
-                      <Button size="sm" className="bg-success text-success-foreground hover:bg-success/90">
+                      <Button 
+                        size="sm" 
+                        variant={assessment.status === 'Approved' ? 'default' : 'outline'}
+                        className={`${assessment.status === 'Approved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                        onClick={() => handleStatusUpdate(assessment.id, 'Approved')}
+                        disabled={updatingAssessment === assessment.id}
+                      >
                         <CheckCircle className="mr-2 h-4 w-4" />
-                        Approve
+                        {updatingAssessment === assessment.id && assessment.status !== 'Approved' ? 'Processing...' : 'Approve'}
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant={assessment.status === 'Flagged' ? 'default' : 'outline'}
+                        size="sm"
+                        className={`${assessment.status === 'Flagged' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}`}
+                        onClick={() => handleStatusUpdate(assessment.id, 'Flagged')}
+                        disabled={updatingAssessment === assessment.id}
+                      >
                         <AlertTriangle className="mr-2 h-4 w-4" />
-                        Flag
+                        {updatingAssessment === assessment.id && assessment.status !== 'Flagged' ? 'Processing...' : 'Flag'}
                       </Button>
-                      <Button variant="destructive" size="sm">
+                      <Button 
+                        variant={assessment.status === 'Rejected' ? 'default' : 'destructive'}
+                        size="sm"
+                        className={assessment.status === 'Rejected' ? 'bg-red-600 hover:bg-red-700' : ''}
+                        onClick={() => handleStatusUpdate(assessment.id, 'Rejected')}
+                        disabled={updatingAssessment === assessment.id}
+                      >
                         <XCircle className="mr-2 h-4 w-4" />
-                        Reject
+                        {updatingAssessment === assessment.id && assessment.status !== 'Rejected' ? 'Processing...' : 'Reject'}
                       </Button>
                     </div>
                   </div>
@@ -225,26 +263,72 @@ export default function Assessments() {
             <DialogTitle>New Assessment Video Analysis</DialogTitle>
           </DialogHeader>
           <VideoAnalysis
-            onAnalysisComplete={async (result: any) => {
+            onAnalysisComplete={async (result: any, profileData: any) => {
               try {
-                await createAssessment({
-                  athleteId: "UNKNOWN",
-                  athleteName: "Unknown",
-                  testType: result?.test_type || "Video Analysis",
-                  submissionDate: new Date().toISOString(),
-                  status: "Pending",
-                  aiScore: 0,
-                  videoUrl: `http://localhost:8000${result.video_url}`,
-                  cheatDetected: false,
-                  performanceMetric: 0,
-                });
-                toast.success("Assessment created successfully");
-                setOpenUploader(false);
+                // Create athlete data for the athletes collection
+                const athleteData = {
+                  name: profileData.fullName || "New Athlete",
+                  age: parseInt(profileData.age) || 0,
+                  gender: profileData.gender || '',
+                  state: profileData.state || '',
+                  district: profileData.district || '',
+                  phoneNumber: profileData.phoneNumber || '',
+                  email: profileData.email || '',
+                  address: profileData.address || '',
+                  sportInterest: profileData.sportInterest || [],
+                  coachName: profileData.coachName || '',
+                  performance: {
+                    verticalJump: 0,
+                    sitUps: 0,
+                    shuttleRun: 0,
+                    flexibility: 0,
+                    overallScore: result?.data?.overallScore || 0,
+                    pushUps: result?.data?.pushUps || 0
+                  },
+                  status: 'Active',
+                  registrationDate: new Date().toISOString(),
+                  lastAssessment: new Date().toISOString(),
+                  benchmarkStatus: result?.data?.overallScore >= 85 ? 'Above' : result?.data?.overallScore >= 70 ? 'At' : 'Below'
+                };
+
+                // Create the athlete in the athletes collection
+                const athleteId = await createAthlete(athleteData);
+                
+                if (athleteId) {
+                  // Create the assessment
+                  const newAssessment = {
+                    athleteId,
+                    athleteName: athleteData.name,
+                    testType: result?.test_type || "push_ups",
+                    submissionDate: new Date().toISOString(),
+                    status: "Completed",
+                    aiScore: result?.data?.overallScore || 0,
+                    videoUrl: "/uploads/videos/push-ups.mp4",
+                    cheatDetected: false,
+                    performanceMetric: result?.data?.pushUps || 0,
+                  };
+                  
+                  // Save the assessment
+                  await createAssessment(newAssessment);
+                  
+                  // Close the dialog and redirect to the athlete's profile
+                  setOpenUploader(false);
+                  navigate(`/athletes/${athleteId}`);
+                } else {
+                  throw new Error("Failed to create athlete profile");
+                }
               } catch (err) {
                 console.error(err);
-                toast.error("Failed to create assessment");
+                toast.error("Failed to save analysis results");
+                setOpenUploader(false);
               }
             }}
+            onAssessmentSaved={(assessmentId) => {
+              // This callback is called after the assessment is saved
+              // We don't need to do anything here as we're already handling the redirect in onAnalysisComplete
+            }}
+            athleteId={`ATHLETE_${Date.now()}`}
+            testType="push_ups"
           />
         </DialogContent>
       </Dialog>

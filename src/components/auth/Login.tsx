@@ -291,11 +291,7 @@ export function Login() {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>© 2024 Sports Authority of India. All rights reserved.</p>
-          <p className="mt-1">Sports Performance Assessment Program</p>
-        </div>
+        {/* Footer removed */}
       </div>
     </div>
   );

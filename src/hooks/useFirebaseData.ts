@@ -348,7 +348,7 @@ export function useAnalyticsData() {
         });
 
         // Calculate test type distribution
-        const testTypes = ['Vertical Jump', 'Sit-ups', 'Shuttle Run', 'Flexibility'];
+        const testTypes = ['Vertical Jump', 'Sit-ups', 'Push-ups', 'Shuttle Run', 'Flexibility'];
         const testDistribution = testTypes.map(testType => {
           const count = assessments?.filter(a => a.testType === testType).length || 0;
           const totalAssessments = assessments?.length || 0;

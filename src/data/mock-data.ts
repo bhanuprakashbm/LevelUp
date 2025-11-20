@@ -15,6 +15,7 @@ export interface Athlete {
   performance: {
     verticalJump: number // cm
     sitUps: number // reps in 1 min
+    pushUps: number // reps in 1 min
     shuttleRun: number // seconds
     flexibility: number // cm
     overallScore: number // percentage
@@ -26,7 +27,7 @@ export interface Assessment {
   id: string
   athleteId: string
   athleteName: string
-  testType: 'Vertical Jump' | 'Sit-ups' | 'Shuttle Run' | 'Flexibility'
+  testType: 'Vertical Jump' | 'Sit-ups' | 'Push-ups' | 'Shuttle Run' | 'Flexibility'
   submissionDate: string
   status: 'Approved' | 'Pending' | 'Flagged' | 'Rejected'
   aiScore: number
@@ -51,10 +52,11 @@ export const mockAthletes: Athlete[] = [
     phoneNumber: '+91-9876543210',
     performance: {
       verticalJump: 58,
-      sitUps: 42,
-      shuttleRun: 9.2,
+      sitUps: 45,
+      pushUps: 42,
+      shuttleRun: 10.2,
       flexibility: 15,
-      overallScore: 85
+      overallScore: 87
     },
     benchmarkStatus: 'Above'
   },
@@ -71,9 +73,10 @@ export const mockAthletes: Athlete[] = [
     status: 'Active',
     phoneNumber: '+91-9876543211',
     performance: {
-      verticalJump: 52,
+      verticalJump: 45,
       sitUps: 38,
-      shuttleRun: 10.1,
+      pushUps: 35,
+      shuttleRun: 11.8,
       flexibility: 18,
       overallScore: 78
     },
@@ -94,6 +97,7 @@ export const mockAthletes: Athlete[] = [
     performance: {
       verticalJump: 45,
       sitUps: 35,
+      pushUps: 32,
       shuttleRun: 11.5,
       flexibility: 12,
       overallScore: 62
@@ -115,6 +119,7 @@ export const mockAthletes: Athlete[] = [
     performance: {
       verticalJump: 55,
       sitUps: 40,
+      pushUps: 45,
       shuttleRun: 9.8,
       flexibility: 16,
       overallScore: 82
@@ -158,6 +163,32 @@ export const mockAssessments: Assessment[] = [
     reviewerNotes: 'Potential timing inconsistency detected',
     cheatDetected: true,
     performanceMetric: 11.5
+  },
+  {
+    id: 'ASS004',
+    athleteId: 'ATH001',
+    athleteName: 'Arjun Kumar',
+    testType: 'Push-ups',
+    submissionDate: '2024-03-15T11:20:00Z',
+    status: 'Approved',
+    aiScore: 92,
+    reviewerNotes: 'Good form and full range of motion',
+    videoUrl: 'https://example.com/videos/pushups/arjun-kumar-001',
+    cheatDetected: false,
+    performanceMetric: 42
+  },
+  {
+    id: 'ASS005',
+    athleteId: 'ATH004',
+    athleteName: 'Anjali Devi',
+    testType: 'Push-ups',
+    submissionDate: '2024-03-14T16:30:00Z',
+    status: 'Approved',
+    aiScore: 95,
+    reviewerNotes: 'Excellent technique, maintained good form throughout',
+    videoUrl: 'https://example.com/videos/pushups/anjali-devi-001',
+    cheatDetected: false,
+    performanceMetric: 45
   }
 ]
 
